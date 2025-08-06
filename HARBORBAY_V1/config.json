@@ -21,6 +21,8 @@
     "UPS_SEPARACION": 40,
     "CAJETIN_X": -2000,
     "CAJETIN_Y": 2000,
+    "CABLE_TRUNK_OFFSET_X": 50,
+    "CABLE_TRUNK_OFFSET_Y": 50,
 
     "CAPAS": {
         "Niveles": 8,
@@ -32,6 +34,7 @@
         "Fibra_IPTV": 5,
         "Fibra_CCTV": 1,
         "Fibra_Data": 2,
+        "Fibra_UPS": 1,
         "APs": 3,
         "Telefonos": 4,
         "TVs": 5,
@@ -56,7 +59,8 @@
         "SW-TEL": { "capa": "Fibra_Telefonia", "color": 4, "label": "FIBRA TELEFONIA" },
         "SW-IPTV": { "capa": "Fibra_IPTV", "color": 5, "label": "FIBRA IPTV" },
         "SW-CCTV": { "capa": "Fibra_CCTV", "color": 1, "label": "FIBRA CCTV" },
-        "SW-DATA": { "capa": "Fibra_Data", "color": 2, "label": "FIBRA DATA" }
+        "SW-DATA": { "capa": "Fibra_Data", "color": 2, "label": "FIBRA DATA" },
+        "SW-UPS": { "capa": "Fibra_UPS", "color": 1, "label": "ALIMENTACION" }
     },
 
     "DISPOSITIVOS": {

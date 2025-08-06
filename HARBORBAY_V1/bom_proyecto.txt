@@ -1,7 +1,7 @@
 ============================================================
       LISTADO DE MATERIALES (BOM) - PROYECTO HARBORBAY
 ============================================================
-Fecha de Generación: 2025-08-06 21:41:53
+Fecha de Generación: 2025-08-06 22:15:06
 
 --- RESUMEN DEL PROYECTO ---
 Total de Torres (MDF+IDF): 16
@@ -27,12 +27,14 @@ Total de Puntos de Red:    2263
     - Modelo: RG-NBS6002 (16 uds)
 - SW-TEL         : 16 unidades
     - Modelo: Meraki MS225 (16 uds)
+- SW-UPS         : 16 unidades
+    - Modelo: UPS (16 uds)
 - SW-WIFI        : 16 unidades
     - Modelo: Meraki MS225 (16 uds)
 
 --- ESTIMACIÓN DE CABLEADO ---
 - Cable UTP CAT6A: ~33,945 metros
-- Fibra Óptica:    ~5,250 metros (estimación bruta)
+- Fibra Óptica:    ~6,000 metros (estimación bruta)
 
 --- OBSERVACIONES ---
 - Las cantidades se basan en el archivo 'torres.csv'.
