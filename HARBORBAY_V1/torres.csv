@@ -1,5 +1,5 @@
 TORRE,torre_nombre,NIVEL,nivel_nombre,apQty,telQty,tvQty,camQty,datQty,ap_modelo,tel_modelo,tv_modelo,cam_modelo,dat_modelo,switch_FIREWALL,switch_CORE,switch_wifi,switch_tel,switch_iptv,switch_cctv,switch_data,switch_FIREWALL_modelo,switch_CORE_modelo,switch_wifi_modelo,switch_tel_modelo,switch_iptv_modelo,switch_cctv_modelo,switch_data_modelo
-0,MDF,0,SOTANO,1,0,0,0,0,Meraki MR46,,,,,2,2,1,1,1,1,1,MERAKI,CATALYSYS,Meraki MS225,Meraki MS225,RG-NBS6002,DS-3E3728F,Meraki MS225
+0,MDF,0,SOTANO,1,0,0,0,0,Meraki MR46,,,,,0,0,1,1,1,1,1,,,Meraki MS225,Meraki MS225,RG-NBS6002,DS-3E3728F,Meraki MS225
 1,IDF1,0,SOTANO,1,0,0,0,0,Meraki MR46,Yealink T46S,Apple TV 4K,Hikvision DS-2CD2143G0,Tomacorriente RJ45,0,0,1,1,1,1,1,,,Meraki MS225,Meraki MS225,RG-NBS6002,DS-3E3728F,Meraki MS225
 1,IDF1,1,NIVEL1,0,1,0,0,0,Meraki MR46,Yealink T46S,Apple TV 4K,Hikvision DS-2CD2143G0,Tomacorriente RJ45,0,0,0,0,0,0,0,,,Meraki MS225,Meraki MS225,RG-NBS6002,DS-3E3728F,Meraki MS225
 1,IDF1,2,NIVEL2,0,0,1,0,0,Meraki MR46,Yealink T46S,Apple TV 4K,Hikvision DS-2CD2143G0,Tomacorriente RJ45,0,0,0,0,0,0,0,,,Meraki MS225,Meraki MS225,RG-NBS6002,DS-3E3728F,Meraki MS225
