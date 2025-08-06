@@ -1,7 +1,7 @@
 ============================================================
       LISTADO DE MATERIALES (BOM) - PROYECTO HARBORBAY
 ============================================================
-Fecha de Generación: 2025-08-06 17:48:08
+Fecha de Generación: 2025-08-06 22:52:16
 
 --- RESUMEN DEL PROYECTO ---
 Total de Torres (MDF+IDF): 16
@@ -17,16 +17,14 @@ Total de Puntos de Red:    2263
 --- TOTAL DE SWITCHES POR TIPO Y MODELO ---
 - SW-CCTV        : 16 unidades
     - Modelo: DS-3E3728F (16 uds)
-- SW-CORE        : 1 unidades
-    - Modelo: CATALYSYS (1 uds)
 - SW-DATA        : 16 unidades
     - Modelo: Meraki MS225 (16 uds)
-- SW-FIREWALL    : 1 unidades
-    - Modelo: MERAKI (1 uds)
 - SW-IPTV        : 16 unidades
     - Modelo: RG-NBS6002 (16 uds)
 - SW-TEL         : 16 unidades
     - Modelo: Meraki MS225 (16 uds)
+- SW-UPS         : 1 unidades
+    - Modelo: UPS (1 uds)
 - SW-WIFI        : 16 unidades
     - Modelo: Meraki MS225 (16 uds)
 
