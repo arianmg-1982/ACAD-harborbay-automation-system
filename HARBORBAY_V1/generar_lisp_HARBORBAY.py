@@ -102,7 +102,7 @@ def lisp_escribir(f, comando):
 def lisp_crear_capa(f, nombre, color):
     """Genera el comando LISP para crear una capa de forma robusta."""
     nombre_escaped = nombre.replace('"', '\\"')
-    lisp_escribir(f, f'(command "-LAYER" "N" "{nombre_escaped}" "C" "{color}" "{nombre_escaped}" "")')
+    lisp_escribir(f, f'(command "-LAYER" "N" "{nombre_escaped}" "C" "{color}" "" "")')
 
 def lisp_seleccionar_capa_y_color(f, capa, color):
     """Genera comandos para seleccionar capa y color."""
@@ -117,11 +117,13 @@ def lisp_dibujar_texto(f, punto, altura, texto, capa="Textos", color=7):
     """Dibuja texto en LISP de forma no interactiva."""
     texto_escaped = texto.replace('"', '\\"')
     lisp_seleccionar_capa_y_color(f, capa, color)
-    lisp_escribir(f, f'(command "-TEXT" (list {punto[0]} {punto[1]}) {altura} 0 "{texto_escaped}")')
+    lisp_escribir(f, f'(command "-TEXT" "S" "Standard" "J" "C" (list {punto[0]} {punto[1]}) {altura} 0 "{texto_escaped}")')
 
 def lisp_dibujar_rectangulo(f, p1, p2):
-    """Dibuja un rectángulo en LISP."""
-    lisp_escribir(f, f'(command "_.RECTANG" (list {p1[0]} {p1[1]}) (list {p2[0]} {p2[1]}) "")')
+    """Dibuja un rectángulo usando PLINE para máxima compatibilidad."""
+    (x1, y1) = p1
+    (x2, y2) = p2
+    lisp_dibujar_polilinea(f, [(x1, y1), (x2, y1), (x2, y2), (x1, y2)], cerrada=True)
 
 def lisp_dibujar_circulo(f, centro, radio):
     """Dibuja un círculo en LISP."""
@@ -139,8 +141,8 @@ def lisp_dibujar_polilinea(f, puntos, cerrada=False):
     lisp_escribir(f, comando)
 
 def lisp_dibujar_hatch(f):
-    """Rellena el último objeto creado."""
-    lisp_escribir(f, '(command "-HATCH" "P" "SOLID" "1" "0" "S" "L" "" "")')
+    """Rellena el último objeto creado de forma segura."""
+    lisp_escribir(f, '(command "-HATCH" "S" "L" "" "")')
 
 def lisp_dibujar_arco_eliptico(f, centro, eje_x, eje_y, angulo_inicio, angulo_fin):
     """Dibuja un arco elíptico."""
