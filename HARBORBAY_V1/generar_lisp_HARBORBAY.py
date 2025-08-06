@@ -377,29 +377,63 @@ def generar_lisp(cfg, torres):
                             p_intermedio = (p_origen[0], p_destino_sw[1] + 20)
                             lisp_seleccionar_capa_y_color(f, "Cables_UTP", cfg['CAPAS']['Cables_UTP'])
                             lisp_dibujar_polilinea(f, [p_origen, p_intermedio, (p_destino_sw[0], p_intermedio[1]), p_destino_sw])
+
+                            # Etiqueta para el cable UTP
+                            cantidad = nivel_data.get(tipo_qty, 0)
+                            if cantidad > 0:
+                                label_text = f"{cantidad}xUTP"
+                                label_pos = (p_origen[0] + 15, (p_origen[1] + p_intermedio[1]) / 2)
+                                lisp_dibujar_texto(f, label_pos, 10, label_text, "Cables_UTP", cfg['CAPAS']['Cables_UTP'])
         lisp_escribir(f, '(princ "DONE.")')
 
         # 2. Cableado de Fibra Óptica de MDF a IDFs
         lisp_escribir(f, '(princ "\\nDibujando cables de Fibra Optica...")')
-        mdf_coords = coords[0]
+
+        fibra_counts = defaultdict(int)
         for torre in torres:
             if torre['id'] == 0: continue
-            idf_coords = coords[torre['id']]
-            for sw_tipo, mdf_sw_coord_top in mdf_coords['switches'].items():
-                if sw_tipo in idf_coords['switches']:
-                    idf_sw_coord_top = idf_coords['switches'][sw_tipo]
+            for sw_tipo in torre['switches']:
+                if sw_tipo in cfg['SWITCH_CONFIG']:
+                    fibra_counts[sw_tipo] += 1
 
-                    y_bandeja = coords_bandejas.get(sw_tipo, y_bandeja_start)
+        mdf_coords = coords[0]
 
-                    p1 = (mdf_sw_coord_top[0], mdf_sw_coord_top[1] - cfg['SWITCH_ALTO'] / 2)
-                    p4 = (idf_sw_coord_top[0], idf_sw_coord_top[1] - cfg['SWITCH_ALTO'] / 2)
+        for sw_tipo in sorted(cfg['SWITCH_CONFIG'].keys()):
+            if sw_tipo not in mdf_coords['switches']: continue
 
-                    p2 = (p1[0] + 50, y_bandeja)
-                    p3 = (p4[0] - 50, y_bandeja)
+            mdf_sw_coord_top = mdf_coords['switches'][sw_tipo]
+            y_bandeja = coords_bandejas.get(sw_tipo, y_bandeja_start)
+            sw_conf = cfg['SWITCH_CONFIG'].get(sw_tipo, {})
+            lisp_seleccionar_capa_y_color(f, sw_conf.get('capa', 'Fibra'), sw_conf.get('color', 2))
 
-                    sw_conf = cfg['SWITCH_CONFIG'].get(sw_tipo, {})
-                    lisp_seleccionar_capa_y_color(f, sw_conf.get('capa', 'Fibra'), sw_conf.get('color', 2))
-                    lisp_dibujar_polilinea(f, [p1, p2, p3, p4])
+            p_start_mdf = (mdf_sw_coord_top[0], mdf_sw_coord_top[1] - cfg['SWITCH_ALTO'] / 2)
+            p_drop_mdf = (p_start_mdf[0] + 150, y_bandeja)
+
+            lisp_dibujar_linea(f, p_start_mdf, p_drop_mdf)
+
+            max_x_idf = 0
+            last_idf_torre = None
+            for torre in reversed(torres):
+                if torre['id'] != 0 and sw_tipo in torre['switches']:
+                    max_x_idf = coords[torre['id']]['switches'][sw_tipo][0]
+                    last_idf_torre = torre
+                    break
+
+            if max_x_idf > 0:
+                p_end_tray_bus = (max_x_idf - 150, y_bandeja)
+                lisp_dibujar_linea(f, p_drop_mdf, p_end_tray_bus)
+
+                label_text = f"{fibra_counts[sw_tipo]}xFO {sw_tipo.replace('SW-', '')}"
+                label_pos = ((p_drop_mdf[0] + p_end_tray_bus[0]) / 2, y_bandeja + 10)
+                lisp_dibujar_texto(f, label_pos, 10, label_text, sw_conf.get('capa', 'Fibra'), sw_conf.get('color', 2))
+
+            for torre in torres:
+                if torre['id'] != 0 and sw_tipo in torre['switches']:
+                    idf_sw_coord_top = coords[torre['id']]['switches'][sw_tipo]
+                    p_end_idf = (idf_sw_coord_top[0], idf_sw_coord_top[1] - cfg['SWITCH_ALTO'] / 2)
+                    p_rise_idf = (p_end_idf[0] - 150, y_bandeja)
+                    lisp_dibujar_linea(f, p_rise_idf, p_end_idf)
+
         lisp_escribir(f, '(princ "DONE.")')
 
         # 3. Cableado Eléctrico desde la UPS a todos los switches
@@ -409,17 +443,28 @@ def generar_lisp(cfg, torres):
             y_bandeja_ups = coords_bandejas.get('UPS', y_bandeja_start)
             lisp_seleccionar_capa_y_color(f, "UPS", cfg['CAPAS']['UPS'])
 
+            p_drop_ups = (p_origen_ups[0] + 150, y_bandeja_ups)
+            lisp_dibujar_linea(f, p_origen_ups, p_drop_ups)
+
+            max_x_switch = 0
+            for torre in torres:
+                for sw in torre['switches']:
+                    sw_coord = coords[torre['id']]['switches'][sw]
+                    max_x_switch = max(max_x_switch, sw_coord[0])
+
+            if max_x_switch > 0:
+                p_end_tray_bus = (max_x_switch - 150, y_bandeja_ups)
+                lisp_dibujar_linea(f, p_drop_ups, p_end_tray_bus)
+
             for torre_cableado in torres:
                 torre_id_cableado = torre_cableado['id']
                 if torre_id_cableado in coords and 'switches' in coords[torre_id_cableado]:
                     for sw_nombre, p_destino_sw_top in coords[torre_id_cableado]['switches'].items():
-                        p1 = p_origen_ups
-                        p4 = (p_destino_sw_top[0], p_destino_sw_top[1] - cfg['SWITCH_ALTO'] / 2)
+                        p_end_sw = (p_destino_sw_top[0], p_destino_sw_top[1] - cfg['SWITCH_ALTO'] / 2)
+                        p_rise_sw = (p_end_sw[0] - 150, y_bandeja_ups)
+                        if p_rise_sw[0] > p_drop_ups[0]: # Solo dibujar si el switch está a la derecha del punto de bajada
+                            lisp_dibujar_linea(f, p_rise_sw, p_end_sw)
 
-                        p2 = (p1[0] + 50, y_bandeja_ups)
-                        p3 = (p4[0] - 50, y_bandeja_ups)
-
-                        lisp_dibujar_polilinea(f, [p1, p2, p3, p4])
         lisp_escribir(f, '(princ "DONE.")')
 
 
