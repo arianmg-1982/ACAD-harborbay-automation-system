@@ -1,0 +1,11 @@
+2025-08-06 20:46:35,269 - INFO - --- INICIO DEL PROCESO DE GENERACIÓN DE PLANOS ---
+2025-08-06 20:46:35,269 - ERROR - Error crítico: El archivo de configuración 'config.json' no fue encontrado.
+2025-08-06 20:46:35,269 - CRITICAL - Ha ocurrido un error inesperado en la ejecución: [Errno 2] No such file or directory: 'config.json'
+Traceback (most recent call last):
+  File "/app/HARBORBAY_V1/generar_lisp_HARBORBAY.py", line 405, in main
+    config = cargar_configuracion()
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/HARBORBAY_V1/generar_lisp_HARBORBAY.py", line 36, in cargar_configuracion
+    with open(CONFIG_FILE, 'r', encoding=ENCODING) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config.json'
