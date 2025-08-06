@@ -6,11 +6,12 @@ from collections import defaultdict
 from datetime import datetime
 
 # --- CONFIGURACION GENERAL ---
-CONFIG_FILE = "config.json"
-CSV_INPUT_FILE = "torres.csv"
-LISP_OUTPUT_FILE = "dibujo_red.lsp"
-BOM_OUTPUT_FILE = "bom_proyecto.txt"
-LOG_FILE = "logs.TXT"
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+CONFIG_FILE = os.path.join(SCRIPT_DIR, "config.json")
+CSV_INPUT_FILE = os.path.join(SCRIPT_DIR, "torres.csv")
+LISP_OUTPUT_FILE = os.path.join(SCRIPT_DIR, "dibujo_red.lsp")
+BOM_OUTPUT_FILE = os.path.join(SCRIPT_DIR, "bom_proyecto.txt")
+LOG_FILE = os.path.join(SCRIPT_DIR, "logs.TXT")
 ENCODING = "utf-8"
 
 # --- CONFIGURACION DE LOGS ---
@@ -135,8 +136,8 @@ def lisp_dibujar_polilinea(f, puntos):
     lisp_escribir(f, comando)
 
 def lisp_dibujar_hatch(f, punto_interno):
-    """Rellena un área cerrada."""
-    lisp_escribir(f, f'(command "_.HATCH" "SOLID" "Y" "N" (list {punto_interno[0]} {punto_interno[1]}) "")')
+    """Rellena un área cerrada de forma robusta para scripts."""
+    lisp_escribir(f, f'(command "-HATCH" "P" "SOLID" "1" "0" "" (list {punto_interno[0]} {punto_interno[1]}) "")')
 
 def lisp_dibujar_arco_eliptico(f, centro, eje_x, eje_y, angulo_inicio, angulo_fin):
     """Dibuja un arco elíptico."""
@@ -249,11 +250,14 @@ def generar_lisp(cfg, torres):
         lisp_escribir(f, '(command "_.REGEN")')
         lisp_escribir(f, '(command "VISUALSTYLE" "Wireframe")')
         lisp_escribir(f, '(command "_.UNDO" "BEGIN")')
+        lisp_escribir(f, '(princ "--- INICIO DE DIBUJO AUTOMATIZADO HARBORBAY ---")')
 
         # --- CREACIÓN DE CAPAS ---
         lisp_escribir(f, "\n; === CREAR CAPAS ===")
+        lisp_escribir(f, '(princ "\\nCreando capas...")')
         for nombre, color in cfg['CAPAS'].items():
             lisp_crear_capa(f, nombre, color)
+        lisp_escribir(f, '(princ "DONE.")')
 
         # --- CÁLCULO DE POSICIONES ---
         x_torre_actual = cfg['X_INICIAL']
@@ -272,13 +276,12 @@ def generar_lisp(cfg, torres):
         niveles_ordenados = sorted(max_dispositivos_por_nivel.keys())
         for nivel_id in niveles_ordenados:
             alturas_niveles[nivel_id] = y_nivel_actual
-            # Altura dinámica basada en la cantidad de dispositivos
             altura_dinamica = 150 + max(0, max_dispositivos_por_nivel[nivel_id] - 5) * 20
             y_nivel_actual += altura_dinamica
 
         # --- DIBUJAR NIVELES Y TORRES ---
         lisp_escribir(f, "\n; === DIBUJAR NIVELES Y TORRES ===")
-        # Dibujar líneas de nivel
+        lisp_escribir(f, '(princ "\\nDibujando lineas de Nivel...")')
         for nivel_id, y_nivel in alturas_niveles.items():
             lisp_seleccionar_capa_y_color(f, "Niveles", cfg['CAPAS']['Niveles'])
             p1 = (cfg['X_INICIAL'] - 50, y_nivel)
@@ -286,13 +289,15 @@ def generar_lisp(cfg, torres):
             lisp_dibujar_linea(f, p1, p2)
             nivel_nombre = torres[0]['niveles'].get(nivel_id, {}).get('nivel_nombre', f"NIVEL {nivel_id}")
             lisp_dibujar_texto(f, (p1[0] + cfg['OFFSET_NOMBRE_NIVEL_X'], y_nivel + cfg['OFFSET_NOMBRE_NIVEL_Y']), 15, nivel_nombre)
+        lisp_escribir(f, '(princ "DONE.")')
 
-        # Dibujar torres, dispositivos y switches
         for torre in torres:
+            lisp_escribir(f, f'\n; === DIBUJAR TORRE: {torre["nombre"]} ===')
+            lisp_escribir(f, f'(princ "\\n>> Dibujando Torre: {torre["nombre"]}...")')
             x_base = torre['x']
             lisp_dibujar_texto(f, (x_base, alturas_niveles[min(alturas_niveles.keys())] + cfg['TORRE_LABEL_OFFSET_Y']), cfg['TORRE_LABEL_ALTURA'], torre['nombre'])
 
-            # Dibujar dispositivos por nivel
+            lisp_escribir(f, f'(princ "\\n   - Dibujando dispositivos por nivel...")')
             for nivel_id, nivel_data in torre['niveles'].items():
                 y_nivel = alturas_niveles[nivel_id]
                 x_dispositivo = x_base + 50
@@ -300,34 +305,31 @@ def generar_lisp(cfg, torres):
                     cantidad = nivel_data.get(tipo_qty, 0)
                     if cantidad > 0:
                         y_dispositivo = y_nivel + cfg['DISPOSITIVO_Y_OFFSET']
-                        # Dibuja el icono
                         globals()[f"dibujar_icono_{conf['icono']}"](f, cfg, x_dispositivo, y_dispositivo)
-                        # Dibuja la etiqueta
                         lisp_dibujar_texto(f, (x_dispositivo + 25, y_dispositivo + 10), 10, f"{cantidad}x{conf['label']}")
                         x_dispositivo += cfg['DISPOSITIVO_ESPACIADO_X']
+            lisp_escribir(f, '(princ "DONE.")')
 
-            # Dibujar switches de la torre
-            y_switch = alturas_niveles[0] - 80 # Switches en el sótano
+            lisp_escribir(f, f'(princ "\\n   - Dibujando switches...")')
+            y_switch = alturas_niveles[0] - 80
             for sw_nombre, sw_modelo in sorted(torre['switches'].items()):
                 dibujar_switch(f, cfg, x_base + 50, y_switch, sw_nombre, sw_modelo)
                 y_switch -= cfg['SWITCH_VERTICAL_SPACING']
+            lisp_escribir(f, '(princ "DONE.")')
 
-            # Dibujar UPS en MDF
             if torre['nombre'] == 'MDF':
+                lisp_escribir(f, f'(princ "\\n   - Dibujando UPS en MDF...")')
                 dibujar_ups(f, cfg, x_base - 150, y_switch)
+                lisp_escribir(f, '(princ "DONE.")')
 
-        # --- DIBUJAR CABLES ---
-        # (Lógica simplificada, se puede expandir)
-        lisp_escribir(f, "\n; === DIBUJAR CABLES (SIMPLIFICADO) ===")
+        lisp_escribir(f, "\n; === DIBUJAR CABLES ===")
+        lisp_escribir(f, '(princ "\\nDibujando cables de Fibra Optica...")')
         mdf_x = torres[0]['x'] + 50 + cfg['SWITCH_ANCHO'] / 2
         mdf_y_base = alturas_niveles[0] - 80 + cfg['SWITCH_ALTO'] / 2
 
         for i, torre in enumerate(torres):
-            if i == 0: continue # Omitir MDF
+            if i == 0: continue
             idf_x = torre['x'] + 50 + cfg['SWITCH_ANCHO'] / 2
-            idf_y_base = alturas_niveles[0] - 80 + cfg['SWITCH_ALTO'] / 2
-
-            # Dibujar Fibras
             y_fibra_offset = 0
             for sw_nombre, sw_conf in cfg['SWITCH_CONFIG'].items():
                 if sw_nombre in torre['switches'] and sw_nombre not in ["SW-FIREWALL", "SW-CORE"]:
@@ -335,11 +337,15 @@ def generar_lisp(cfg, torres):
                     p1 = (mdf_x, mdf_y_base - y_fibra_offset)
                     p2 = (idf_x, mdf_y_base - y_fibra_offset)
                     lisp_dibujar_linea(f, p1, p2)
-                    y_fibra_offset += 5 # Pequeño offset para no solapar
+                    y_fibra_offset += 5
+        lisp_escribir(f, '(princ "DONE.")')
 
         # --- FINALIZAR DIBUJO ---
+        lisp_escribir(f, "\n; === FINALIZAR DIBUJO ===")
+        lisp_escribir(f, '(princ "\\nFinalizando y haciendo zoom...")')
         lisp_escribir(f, '(command "_.ZOOM" "E")')
         lisp_escribir(f, '(command "_.UNDO" "END")')
+        lisp_escribir(f, '(princ "\\n--- PROCESO DE DIBUJO COMPLETADO ---")')
         logging.info(f"Archivo LISP '{LISP_OUTPUT_FILE}' generado con éxito.")
 
 def generar_bom(cfg, torres):
