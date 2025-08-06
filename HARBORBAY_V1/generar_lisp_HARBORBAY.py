@@ -264,44 +264,62 @@ def generar_lisp(cfg, torres):
             lisp_crear_capa(f, nombre, color)
         lisp_escribir(f, '(princ "DONE.")')
 
-        # --- CÁLCULO DE POSICIONES ---
-        x_torre_actual = cfg['X_INICIAL']
-        max_dispositivos_por_nivel = defaultdict(int)
+        # --- CÁLCULO DE POSICIONES Y ALMACENAMIENTO DE COORDENADAS ---
+        # Este diccionario almacenará las coordenadas exactas de cada elemento para su posterior uso en cableado
+        coords = defaultdict(dict)
 
-        for torre in torres:
+        # 1. Calcular coordenadas X para cada torre
+        x_torre_actual = cfg['X_INICIAL']
+        for i, torre in enumerate(torres):
+            torre['id'] = i
             torre['x'] = x_torre_actual
             x_torre_actual += cfg['LONGITUD_PISO'] + cfg['SEPARACION_ENTRE_TORRES']
-            for nivel_id, nivel_data in torre['niveles'].items():
-                num_dispositivos = sum(nivel_data.get(k, 0) for k in cfg['DISPOSITIVOS'])
-                if num_dispositivos > max_dispositivos_por_nivel[nivel_id]:
-                    max_dispositivos_por_nivel[nivel_id] = num_dispositivos
 
+        # 2. Calcular coordenadas Y para cada nivel (bottom-up)
         y_nivel_actual = cfg['Y_INICIAL']
         alturas_niveles = {}
-        niveles_ordenados = sorted(max_dispositivos_por_nivel.keys())
+        niveles_ordenados = sorted(list(set(n_id for t in torres for n_id in t['niveles'])))
         for nivel_id in niveles_ordenados:
             alturas_niveles[nivel_id] = y_nivel_actual
-            altura_dinamica = 150 + max(0, max_dispositivos_por_nivel[nivel_id] - 5) * 20
-            y_nivel_actual += altura_dinamica
+            y_nivel_actual += cfg['ESPACIO_ENTRE_NIVELES']
 
-        # --- DIBUJAR NIVELES Y TORRES ---
-        lisp_escribir(f, "\n; === DIBUJAR NIVELES Y TORRES ===")
+        # --- DIBUJAR NIVELES, ETIQUETAS Y EQUIPOS ---
+        lisp_escribir(f, "\n; === DIBUJAR NIVELES Y ESTRUCTURA DE TORRES ===")
+        # Dibujar líneas de nivel y etiquetas
         lisp_escribir(f, '(princ "\\nDibujando lineas de Nivel...")')
         for nivel_id, y_nivel in alturas_niveles.items():
             lisp_seleccionar_capa_y_color(f, "Niveles", cfg['CAPAS']['Niveles'])
             p1 = (cfg['X_INICIAL'] - 50, y_nivel)
             p2 = (torres[-1]['x'] + cfg['LONGITUD_PISO'] + 50, y_nivel)
             lisp_dibujar_linea(f, p1, p2)
-            nivel_nombre = torres[0]['niveles'].get(nivel_id, {}).get('nivel_nombre', f"NIVEL {nivel_id}")
-            lisp_dibujar_texto(f, (p1[0] + cfg['OFFSET_NOMBRE_NIVEL_X'], y_nivel + cfg['OFFSET_NOMBRE_NIVEL_Y']), 15, nivel_nombre)
+            nivel_nombre = next((t['niveles'][nivel_id]['nivel_nombre'] for t in torres if nivel_id in t['niveles']), f"NIVEL {nivel_id}")
+            lisp_dibujar_texto(f, (p1[0] + 10, y_nivel + 10), 15, nivel_nombre)
         lisp_escribir(f, '(princ "DONE.")')
 
+        # Dibujar Torres, Switches, y Dispositivos
         for torre in torres:
+            torre_id = torre['id']
+            x_base = torre['x']
             lisp_escribir(f, f'\n; === DIBUJAR TORRE: {torre["nombre"]} ===')
             lisp_escribir(f, f'(princ "\\n>> Dibujando Torre: {torre["nombre"]}...")')
-            x_base = torre['x']
-            lisp_dibujar_texto(f, (x_base, alturas_niveles[min(alturas_niveles.keys())] + cfg['TORRE_LABEL_OFFSET_Y']), cfg['TORRE_LABEL_ALTURA'], torre['nombre'])
 
+            # Dibujar etiqueta de la torre
+            y_etiqueta_torre = alturas_niveles[min(alturas_niveles.keys())] - cfg['TORRE_LABEL_OFFSET_Y']
+            lisp_dibujar_texto(f, (x_base, y_etiqueta_torre), cfg['TORRE_LABEL_ALTURA'], torre['nombre'])
+
+            # Dibujar Switches en el Sótano (Nivel 0)
+            lisp_escribir(f, '(princ "\\n   - Dibujando switches...")')
+            y_sotano = alturas_niveles[0]
+            y_switch = y_sotano - cfg['SWITCH_VERTICAL_SPACING'] * (len(torre['switches']))
+            coords[torre_id]['switches'] = {}
+            for i, (sw_nombre, sw_modelo) in enumerate(sorted(torre['switches'].items())):
+                x_switch = x_base + 50
+                dibujar_switch(f, cfg, x_switch, y_switch, sw_nombre, sw_modelo)
+                coords[torre_id]['switches'][sw_nombre] = (x_switch + cfg['SWITCH_ANCHO'] / 2, y_switch + cfg['SWITCH_ALTO'])
+                y_switch += cfg['SWITCH_VERTICAL_SPACING']
+            lisp_escribir(f, '(princ "DONE.")')
+
+            # Dibujar Dispositivos por nivel
             lisp_escribir(f, f'(princ "\\n   - Dibujando dispositivos por nivel...")')
             for nivel_id, nivel_data in torre['niveles'].items():
                 y_nivel = alturas_niveles[nivel_id]
@@ -311,38 +329,44 @@ def generar_lisp(cfg, torres):
                     if cantidad > 0:
                         y_dispositivo = y_nivel + cfg['DISPOSITIVO_Y_OFFSET']
                         globals()[f"dibujar_icono_{conf['icono']}"](f, cfg, x_dispositivo, y_dispositivo)
-                        lisp_dibujar_texto(f, (x_dispositivo + 25, y_dispositivo + 10), 10, f"{cantidad}x{conf['label']}")
+                        lisp_dibujar_texto(f, (x_dispositivo, y_dispositivo - 20), 10, f"{cantidad}x{conf['label']}")
+                        # Guardar coordenadas para cableado UTP
+                        coords[torre_id][f'disp_{nivel_id}_{conf["label"]}'] = (x_dispositivo, y_dispositivo)
                         x_dispositivo += cfg['DISPOSITIVO_ESPACIADO_X']
             lisp_escribir(f, '(princ "DONE.")')
 
-            lisp_escribir(f, f'(princ "\\n   - Dibujando switches...")')
-            y_switch = alturas_niveles[0] - 80
-            for sw_nombre, sw_modelo in sorted(torre['switches'].items()):
-                dibujar_switch(f, cfg, x_base + 50, y_switch, sw_nombre, sw_modelo)
-                y_switch -= cfg['SWITCH_VERTICAL_SPACING']
-            lisp_escribir(f, '(princ "DONE.")')
-
-            if torre['nombre'] == 'MDF':
-                lisp_escribir(f, f'(princ "\\n   - Dibujando UPS en MDF...")')
-                dibujar_ups(f, cfg, x_base - 150, y_switch)
-                lisp_escribir(f, '(princ "DONE.")')
-
+        # --- DIBUJAR CABLES ---
         lisp_escribir(f, "\n; === DIBUJAR CABLES ===")
-        lisp_escribir(f, '(princ "\\nDibujando cables de Fibra Optica...")')
-        mdf_x = torres[0]['x'] + 50 + cfg['SWITCH_ANCHO'] / 2
-        mdf_y_base = alturas_niveles[0] - 80 + cfg['SWITCH_ALTO'] / 2
 
-        for i, torre in enumerate(torres):
-            if i == 0: continue
-            idf_x = torre['x'] + 50 + cfg['SWITCH_ANCHO'] / 2
-            y_fibra_offset = 0
-            for sw_nombre, sw_conf in cfg['SWITCH_CONFIG'].items():
-                if sw_nombre in torre['switches'] and sw_nombre not in ["SW-FIREWALL", "SW-CORE"]:
-                    lisp_seleccionar_capa_y_color(f, sw_conf['capa'], sw_conf['color'])
-                    p1 = (mdf_x, mdf_y_base - y_fibra_offset)
-                    p2 = (idf_x, mdf_y_base - y_fibra_offset)
-                    lisp_dibujar_linea(f, p1, p2)
-                    y_fibra_offset += 5
+        # 1. Cableado UTP Vertical dentro de cada torre
+        lisp_escribir(f, '(princ "\\nDibujando cables UTP...")')
+        for torre in torres:
+            torre_id = torre['id']
+            for nivel_id, nivel_data in torre['niveles'].items():
+                for tipo_qty, conf_disp in cfg['DISPOSITIVOS'].items():
+                    if nivel_data.get(tipo_qty, 0) > 0:
+                        sw_tipo_mapeado = cfg['MAPEO_SWITCH'].get(tipo_qty)
+                        if sw_tipo_mapeado and sw_tipo_mapeado in coords[torre_id]['switches']:
+                            p_origen = coords[torre_id][f'disp_{nivel_id}_{conf_disp["label"]}']
+                            p_destino_sw = coords[torre_id]['switches'][sw_tipo_mapeado]
+
+                            p_intermedio = (p_origen[0], p_destino_sw[1] + 20)
+                            lisp_seleccionar_capa_y_color(f, "Cables_UTP", cfg['CAPAS']['Cables_UTP'])
+                            lisp_dibujar_polilinea(f, [p_origen, p_intermedio, (p_destino_sw[0], p_intermedio[1]), p_destino_sw])
+        lisp_escribir(f, '(princ "DONE.")')
+
+        # 2. Cableado de Fibra Óptica de MDF a IDFs
+        lisp_escribir(f, '(princ "\\nDibujando cables de Fibra Optica...")')
+        mdf_coords = coords[0]
+        for torre in torres:
+            if torre['id'] == 0: continue # No conectar MDF a sí mismo
+            idf_coords = coords[torre['id']]
+            for sw_tipo, mdf_sw_coord in mdf_coords['switches'].items():
+                if sw_tipo in idf_coords['switches']:
+                    idf_sw_coord = idf_coords['switches'][sw_tipo]
+                    sw_conf = cfg['SWITCH_CONFIG'].get(sw_tipo, {})
+                    lisp_seleccionar_capa_y_color(f, sw_conf.get('capa', 'Fibra'), sw_conf.get('color', 2))
+                    lisp_dibujar_linea(f, mdf_sw_coord, idf_sw_coord)
         lisp_escribir(f, '(princ "DONE.")')
 
         # --- FINALIZAR DIBUJO ---
