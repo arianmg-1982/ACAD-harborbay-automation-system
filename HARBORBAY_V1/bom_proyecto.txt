@@ -1,0 +1,41 @@
+============================================================
+      LISTADO DE MATERIALES (BOM) - PROYECTO HARBORBAY
+============================================================
+Fecha de Generación: 2025-08-06 20:46:43
+
+--- RESUMEN DEL PROYECTO ---
+Total de Torres (MDF+IDF): 16
+Total de Puntos de Red:    2263
+
+--- TOTAL DE DISPOSITIVOS ---
+- AP        : 401 unidades
+- TEL       : 439 unidades
+- TV        : 233 unidades
+- CCTV      : 139 unidades
+- DATO      : 1051 unidades
+
+--- TOTAL DE SWITCHES POR TIPO Y MODELO ---
+- SW-CCTV        : 16 unidades
+    - Modelo: DS-3E3728F (16 uds)
+- SW-CORE        : 1 unidades
+    - Modelo: CATALYSYS (1 uds)
+- SW-DATA        : 16 unidades
+    - Modelo: Meraki MS225 (16 uds)
+- SW-FIREWALL    : 1 unidades
+    - Modelo: MERAKI (1 uds)
+- SW-IPTV        : 16 unidades
+    - Modelo: RG-NBS6002 (16 uds)
+- SW-TEL         : 16 unidades
+    - Modelo: Meraki MS225 (16 uds)
+- SW-WIFI        : 16 unidades
+    - Modelo: Meraki MS225 (16 uds)
+
+--- ESTIMACIÓN DE CABLEADO ---
+- Cable UTP CAT6A: ~33,945 metros
+- Fibra Óptica:    ~5,250 metros (estimación bruta)
+
+--- OBSERVACIONES ---
+- Las cantidades se basan en el archivo 'torres.csv'.
+- La longitud del cableado es una estimación y requiere verificación en sitio.
+- Se incluye 1 UPS centralizada en el MDF.
+============================================================

@@ -1,0 +1,69 @@
+{
+    "X_INICIAL": 100,
+    "Y_INICIAL": 100,
+    "ESPACIO_ENTRE_NIVELES": 200,
+    "LONGITUD_PISO": 450,
+    "SEPARACION_ENTRE_TORRES": 600,
+    "OFFSET_NOMBRE_NIVEL_X": 10,
+    "OFFSET_NOMBRE_NIVEL_Y": -10,
+    "TORRE_LABEL_OFFSET_Y": -50,
+    "TORRE_LABEL_ALTURA": 25,
+    "DISPOSITIVO_ESPACIADO_X": 100,
+    "DISPOSITIVO_Y_OFFSET": 50,
+    "SWITCH_VERTICAL_SPACING": 60,
+    "SWITCH_ANCHO": 120,
+    "SWITCH_ALTO": 40,
+    "SWITCH_TEXTO_ALTURA": 8,
+    "SWITCH_TEXTO_OFFSET_X": 5,
+    "SWITCH_TEXTO_OFFSET_Y": 15,
+    "UPS_ANCHO": 80,
+    "UPS_ALTO": 60,
+    "UPS_SEPARACION": 40,
+    "CAJETIN_X": -2000,
+    "CAJETIN_Y": 2000,
+
+    "CAPAS": {
+        "Niveles": 8,
+        "Switches": 6,
+        "Textos": 7,
+        "Cables_UTP": 5,
+        "Fibra_WiFi": 3,
+        "Fibra_Telefonia": 4,
+        "Fibra_IPTV": 5,
+        "Fibra_CCTV": 1,
+        "Fibra_Data": 2,
+        "APs": 3,
+        "Telefonos": 4,
+        "TVs": 5,
+        "Camaras": 1,
+        "Datos": 1,
+        "UPS": 1,
+        "Estadisticas": 7
+    },
+
+    "MAPEO_SWITCH": {
+        "apQty": "SW-WIFI",
+        "telQty": "SW-TEL",
+        "tvQty": "SW-IPTV",
+        "camQty": "SW-CCTV",
+        "datQty": "SW-DATA"
+    },
+
+    "SWITCH_CONFIG": {
+        "SW-FIREWALL": { "capa": "Switches", "color": 6, "label": "FIBRA FIREWALL" },
+        "SW-CORE": { "capa": "Switches", "color": 6, "label": "FIBRA CORE" },
+        "SW-WIFI": { "capa": "Fibra_WiFi", "color": 3, "label": "FIBRA WIFI" },
+        "SW-TEL": { "capa": "Fibra_Telefonia", "color": 4, "label": "FIBRA TELEFONIA" },
+        "SW-IPTV": { "capa": "Fibra_IPTV", "color": 5, "label": "FIBRA IPTV" },
+        "SW-CCTV": { "capa": "Fibra_CCTV", "color": 1, "label": "FIBRA CCTV" },
+        "SW-DATA": { "capa": "Fibra_Data", "color": 2, "label": "FIBRA DATA" }
+    },
+
+    "DISPOSITIVOS": {
+        "apQty": { "capa": "APs", "label": "AP", "icono": "ap" },
+        "telQty": { "capa": "Telefonos", "label": "TEL", "icono": "telefono" },
+        "tvQty": { "capa": "TVs", "label": "TV", "icono": "tv" },
+        "camQty": { "capa": "Camaras", "label": "CCTV", "icono": "camara" },
+        "datQty": { "capa": "Datos", "label": "DATO", "icono": "dato" }
+    }
+}
