@@ -100,24 +100,24 @@ def lisp_escribir(f, comando):
     f.write(comando + "\n")
 
 def lisp_crear_capa(f, nombre, color):
-    """Genera el comando LISP para crear una capa."""
+    """Genera el comando LISP para crear una capa de forma robusta."""
     nombre_escaped = nombre.replace('"', '\\"')
-    lisp_escribir(f, f'(command "-LAYER" "MAKE" "{nombre_escaped}" "COLOR" "{color}" "" "")')
+    lisp_escribir(f, f'(command "-LAYER" "N" "{nombre_escaped}" "C" "{color}" "{nombre_escaped}" "")')
 
 def lisp_seleccionar_capa_y_color(f, capa, color):
     """Genera comandos para seleccionar capa y color."""
-    lisp_escribir(f, f'(setvar "CLAYER" "{capa}")')
-    lisp_escribir(f, f'(command "_.COLOR" "{color}")')
+    lisp_escribir(f, f'(command "-LAYER" "S" "{capa}" "")')
+    lisp_escribir(f, f'(command "-COLOR" "{color}")')
 
 def lisp_dibujar_linea(f, p1, p2):
     """Dibuja una línea en LISP."""
     lisp_escribir(f, f'(command "_.LINE" (list {p1[0]} {p1[1]}) (list {p2[0]} {p2[1]}) "")')
 
 def lisp_dibujar_texto(f, punto, altura, texto, capa="Textos", color=7):
-    """Dibuja texto en LISP."""
+    """Dibuja texto en LISP de forma no interactiva."""
     texto_escaped = texto.replace('"', '\\"')
     lisp_seleccionar_capa_y_color(f, capa, color)
-    lisp_escribir(f, f'(command "_.TEXT" "Style" "Standard" (list {punto[0]} {punto[1]}) {altura} 0 "{texto_escaped}")')
+    lisp_escribir(f, f'(command "-TEXT" (list {punto[0]} {punto[1]}) {altura} 0 "{texto_escaped}")')
 
 def lisp_dibujar_rectangulo(f, p1, p2):
     """Dibuja un rectángulo en LISP."""
@@ -127,17 +127,20 @@ def lisp_dibujar_circulo(f, centro, radio):
     """Dibuja un círculo en LISP."""
     lisp_escribir(f, f'(command "_.CIRCLE" (list {centro[0]} {centro[1]}) {radio})')
 
-def lisp_dibujar_polilinea(f, puntos):
+def lisp_dibujar_polilinea(f, puntos, cerrada=False):
     """Dibuja una polilínea."""
     comando = '(command "_.PLINE"'
     for p in puntos:
         comando += f' (list {p[0]} {p[1]})'
-    comando += ' "")'
+    if cerrada:
+        comando += ' "C")'
+    else:
+        comando += ' "")'
     lisp_escribir(f, comando)
 
-def lisp_dibujar_hatch(f, punto_interno):
-    """Rellena un área cerrada de forma robusta para scripts."""
-    lisp_escribir(f, f'(command "-HATCH" "P" "SOLID" "1" "0" "" (list {punto_interno[0]} {punto_interno[1]}) "")')
+def lisp_dibujar_hatch(f):
+    """Rellena el último objeto creado."""
+    lisp_escribir(f, '(command "-HATCH" "P" "SOLID" "1" "0" "S" "L" "" "")')
 
 def lisp_dibujar_arco_eliptico(f, centro, eje_x, eje_y, angulo_inicio, angulo_fin):
     """Dibuja un arco elíptico."""
@@ -212,8 +215,8 @@ def dibujar_icono_dato(f, cfg, x, y):
     p1 = (x - base / 2, y)
     p2 = (x + base / 2, y)
     p3 = (x, y + altura)
-    lisp_dibujar_polilinea(f, [p1, p2, p3, p1])
-    lisp_dibujar_hatch(f, (x, y + 5))
+    lisp_dibujar_polilinea(f, [p1, p2, p3], cerrada=True)
+    lisp_dibujar_hatch(f)
 
 def dibujar_switch(f, cfg, x, y, nombre, modelo):
     """Dibuja un switch con su etiqueta."""
